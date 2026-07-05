@@ -12,37 +12,33 @@ flowchart TD
     SSH --> Dropbear["Dropbear SSH Server"]
 
     Boa --> tcWebApi["tcWebApi"]
-    Dropbear --> Shell["Embedded Linux Shell"]
 
+    Dropbear --> Shell["Linux Shell"]
     Shell --> CLI["tcapi CLI"]
 
-    tcWebApi --> libtcapi["libtcapi.so"]
-    CLI --> libtcapi
+    tcWebApi --> Lib["libtcapi.so"]
+    CLI --> Lib
 
-    libtcapi --> Socket["Unix Domain Socket<br>/tmp/tcapi_sock"]
+    Lib --> Socket["/tmp/tcapi_sock"]
 
     Socket --> CFG["cfg_manager"]
 
-    CFG --> DHCP["udhcpd<br>DHCP Server"]
-    CFG --> DNS["dnsmasq<br>DNS Forwarder"]
-    CFG --> PPP["pppd<br>PPPoE Client"]
-    CFG --> FW["iptables<br>Firewall / NAT"]
-    CFG --> Web["Boa Runtime Control"]
-    CFG --> DB["Configuration Database"]
+    CFG --> DHCP["udhcpd"]
+    CFG --> DNS["dnsmasq"]
+    CFG --> PPP["pppd"]
+    CFG --> FW["iptables"]
 
-    DB --> Romfile["romfile.cfg"]
-    Romfile --> Flash["MTD romfile partition"]
+    CFG --> Config["Configuration Database"]
+
+    Config --> Rom["romfile.cfg"]
+
+    Rom --> Flash["MTD: romfile"]
 ```
 
 ## Description
 
-This diagram illustrates the runtime service architecture discovered during the reverse engineering process.
+This diagram summarizes the runtime service architecture discovered during the reverse engineering of the ASUS DSL-AC750 firmware.
 
-The router exposes two main administrative paths:
+Both the web interface and the command-line interface ultimately communicate with the `cfg_manager` daemon through `libtcapi.so` and the Unix Domain Socket located at `/tmp/tcapi_sock`.
 
-- Web-based management through Boa and `tcWebApi`
-- Shell-based management through Dropbear SSH and `tcapi`
-
-Both paths eventually use `libtcapi.so` and communicate with `cfg_manager` through the Unix Domain Socket located at `/tmp/tcapi_sock`.
-
-`cfg_manager` acts as the central service orchestration and configuration daemon. It coordinates runtime services such as DHCP, DNS, PPPoE, firewall/NAT, web management, and persistent configuration storage.
+`cfg_manager` is responsible for coordinating runtime services and managing persistent configuration stored in the `romfile` flash partition.
